@@ -1,3 +1,4 @@
+// Unit tests for the resample package.
 package resample
 
 import (

@@ -1,6 +1,8 @@
-// Package resample provides a minimal CGO binding to FFmpeg's
-// libswresample for converting mono float32 audio between sample rates.
-// See https://ffmpeg.org/doxygen/trunk/group__lswr.html for library docs.
+// Package resample exposes a tiny wrapper around FFmpeg's libswresample
+// (https://ffmpeg.org/libswresample.html). The binding currently supports
+// resampling mono 32‑bit floating point audio between arbitrary input and
+// output sample rates. Internally it uses SwrContext and only covers the
+// minimal operations required by the example and tests.
 package resample
 
 /*
@@ -19,19 +21,23 @@ import (
 	"unsafe"
 )
 
-// Resampler wraps FFmpeg's SwrContext for mono float32 audio.
+// Resampler converts audio from one sample rate to another. It assumes both
+// the input and output are mono samples encoded as 32‑bit floats in native
+// endianness.
 type Resampler struct {
 	ctx     *C.struct_SwrContext
 	inRate  int
 	outRate int
 }
 
-// New creates a new Resampler converting from inRate to outRate.
+
+// New allocates and initializes a Resampler that converts from inRate to
+// outRate. The caller must call Close when finished with the resampler.
 func New(inRate, outRate int) (*Resampler, error) {
 	ctx := C.swr_alloc_set_opts(nil,
 		C.long(C.AV_CH_LAYOUT_MONO), C.AV_SAMPLE_FMT_FLT, C.int(outRate),
 		C.long(C.AV_CH_LAYOUT_MONO), C.AV_SAMPLE_FMT_FLT, C.int(inRate),
-		0, nil)
+		0, nil) // deprecated but simpler than swr_alloc_set_opts2
 	if ctx == nil {
 		return nil, errors.New("swr_alloc_set_opts failed")
 	}
@@ -50,8 +56,10 @@ func (r *Resampler) Close() {
 	}
 }
 
-// Convert resamples the input mono float32 slice. If in is nil or empty,
-// remaining buffered samples are flushed.
+
+// Convert resamples the provided mono float32 slice and returns the converted
+// data. Passing a nil or empty slice flushes any buffered samples inside the
+// SwrContext. After Close is called, Convert returns an error.
 func (r *Resampler) Convert(in []float32) ([]float32, error) {
 	if r.ctx == nil {
 		return nil, errors.New("nil context")

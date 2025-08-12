@@ -1,3 +1,5 @@
+// Command example demonstrates resampling a generated sine wave from
+// 44.1 kHz to 48 kHz using the resample package.
 package main
 
 import (

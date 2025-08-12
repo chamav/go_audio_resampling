@@ -30,6 +30,7 @@ type Resampler struct {
 	outRate int
 }
 
+
 // New allocates and initializes a Resampler that converts from inRate to
 // outRate. The caller must call Close when finished with the resampler.
 func New(inRate, outRate int) (*Resampler, error) {
@@ -54,6 +55,7 @@ func (r *Resampler) Close() {
 		r.ctx = nil
 	}
 }
+
 
 // Convert resamples the provided mono float32 slice and returns the converted
 // data. Passing a nil or empty slice flushes any buffered samples inside the
